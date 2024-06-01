@@ -30,7 +30,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  double _centi = 0.0;
+  double _inti = 0.0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,14 +43,14 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('インチ'),
+            Text('センチ'),
             TextField(onChanged: (value) {
               setState(() {
-                _centi = (double.tryParse(value) ?? 0) * 2.54;
+                _inti = (double.tryParse(value) ?? 0) / 2.54;
               });
             }),
             SizedBox(height: 16),
-            Text('結果:$_centiセンチ'),
+            Text('結果:$_intiインチ'),
           ],
         ),
       ),
