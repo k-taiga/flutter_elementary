@@ -30,7 +30,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  double _inti = 0.0;
+  double _height = 0.0;
+  double _weight = 0.0;
+  double _bmi = 0.0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,14 +45,32 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('センチ'),
+            Text('身長(cm)'),
             TextField(onChanged: (value) {
-              setState(() {
-                _inti = (double.tryParse(value) ?? 0) / 2.54;
-              });
+              _height = (double.tryParse(value) ?? 0) / 100;
             }),
             SizedBox(height: 16),
-            Text('結果:$_intiインチ'),
+            Text('体重'),
+            TextField(onChanged: (value) {
+              _weight = double.tryParse(value) ?? 0;
+            }),
+            ElevatedButton(
+              onPressed: () {
+                if (_weight <= 0 || _height <= 0) {
+                  setState(() {
+                    _bmi = 0;
+                  });
+
+                  return;
+                }
+
+                setState(() {
+                  _bmi = _weight / (_height * _height);
+                });
+              },
+              child: Text('計算する'),
+            ),
+            Text('BMIは$_bmiです。'),
           ],
         ),
       ),
