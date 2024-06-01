@@ -30,47 +30,72 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  double _height = 0.0;
-  double _weight = 0.0;
-  double _bmi = 0.0;
+  void _pushPage() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return NextPage();
+    }));
+  }
+
+  void _modalPage() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            return NextPage();
+          },
+          fullscreenDialog: true,
+        ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Text(widget.title),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                  onPressed: () {
+                    _pushPage();
+                  },
+                  child: const Text('プッシュ遷移')),
+              ElevatedButton(
+                  onPressed: () {
+                    _modalPage();
+                  },
+                  child: const Text('モーダル遷移')),
+            ],
+          ),
+        ));
+    ;
+  }
+}
+
+class NextPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: const Text('Next Page'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('身長(cm)'),
-            TextField(onChanged: (value) {
-              _height = (double.tryParse(value) ?? 0) / 100;
-            }),
-            SizedBox(height: 16),
-            Text('体重'),
-            TextField(onChanged: (value) {
-              _weight = double.tryParse(value) ?? 0;
-            }),
+            const Text(
+              'Next Pageです。',
+              style: TextStyle(fontSize: 16),
+            ),
             ElevatedButton(
               onPressed: () {
-                if (_weight <= 0 || _height <= 0) {
-                  setState(() {
-                    _bmi = 0;
-                  });
-
-                  return;
-                }
-
-                setState(() {
-                  _bmi = _weight / (_height * _height);
-                });
+                Navigator.pop(context);
               },
-              child: Text('計算する'),
+              child: const Text('戻る'),
             ),
-            Text('BMIは$_bmiです。'),
           ],
         ),
       ),
