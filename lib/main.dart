@@ -15,118 +15,51 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyCheckBox(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+class MyCheckBox extends StatefulWidget {
+  const MyCheckBox({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyCheckBox> createState() => _MyCheckBoxState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  List<Map<String, String>> contacts = [
-    {'name': '山田 太郎', 'number': '070-1234-5678', 'address': '東京都'},
-    {'name': '鈴木 一郎', 'number': '080-1234-5678', 'address': '神奈川'},
-    {'name': '佐藤 花子', 'number': '090-1234-5678', 'address': '大阪'},
-  ];
+class _MyCheckBoxState extends State<MyCheckBox> {
+  bool isChecked = false;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: ListView.builder(
-          itemCount: contacts.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-                leading: const Icon(Icons.phone),
-                title: Text(contacts[index]['name']!),
-                subtitle: Text(contacts[index]['number']!),
-                trailing: const Icon(Icons.keyboard_arrow_right),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return DetailPage(contact: contacts[index]);
-                      },
-                    ),
-                  );
-                });
-          }),
-    );
+  void _toggleCheckbox() {
+    // setStateで状態を更新
+    setState(() {
+      isChecked = !isChecked;
+    });
+    print('_toggleCheckbox isChecked=[$isChecked]');
   }
-}
-
-class DetailPage extends StatelessWidget {
-  const DetailPage({Key? key, required this.contact}) : super(key: key);
-
-  final Map<String, String> contact;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${contact['name']}'),
-      ),
-      body: Center(
-          child: Column(
-        children: [
-          const SizedBox(
-            width: 30,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                const Icon(Icons.account_circle, size: 40),
-                Text('名前: ${contact['name']}',
-                    style: const TextStyle(fontSize: 20)),
-              ],
+        appBar: AppBar(
+          title: Text('MyCheckBox Demo'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
+        body: Center(
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 70),
+              child: CheckboxListTile(
+                  // CheckBoxを左寄せする
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: const Text('利用規約に同意する。'),
+                  value: isChecked,
+                  onChanged: (value) {
+                    _toggleCheckbox();
+                  }),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                const Icon(Icons.phone, size: 40),
-                Text('電話: ${contact['number']}',
-                    style: const TextStyle(fontSize: 20)),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                const Icon(Icons.home, size: 40),
-                Text('住所: ${contact['address']}',
-                    style: const TextStyle(fontSize: 20)),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: ElevatedButton(
-                onPressed: () {},
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.phone, size: 30),
-                    Text('電話をかける'),
-                  ],
-                )),
-          )
-        ],
-      )),
-    );
+            Text('isChecked = [$isChecked]')
+          ]),
+        ));
   }
 }
