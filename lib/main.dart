@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,89 +18,96 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: MySlider(),
+      home: const StopWatch(),
     );
   }
 }
 
-class MySlider extends StatefulWidget {
-  const MySlider({super.key});
+class StopWatch extends StatefulWidget {
+  const StopWatch({super.key});
 
   @override
-  State<MySlider> createState() => _MySliderState();
+  State<StopWatch> createState() => _StopWatchState();
 }
 
-class _MySliderState extends State<MySlider> {
-  double _currentSliderValue = 20;
+class _StopWatchState extends State<StopWatch> {
+  Timer _timer = Timer(Duration.zero, () {});
+  // Flutterが定義しているStopwatchオブジェクト
+  final Stopwatch _stopwatch = Stopwatch();
+  String _time = '00:00:000';
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flutter Slider'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Center(
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Slider(
-          value: _currentSliderValue,
-          min: 0,
-          max: 100,
-          divisions: 100,
-          label: _currentSliderValue.round().toString(),
-          onChanged: (double value) {
-            setState(() {
-              _currentSliderValue = value;
-            });
-            print('Value Selected $_currentSliderValue');
-          },
-        ),
-        Text('Value Selected $_currentSliderValue'),
-      ])),
-    );
+  void _startTimer() {
+    if (!_stopwatch.isRunning) {
+      _stopwatch.start();
+      // 1millisecondごとに実施する処理
+      _timer = Timer.periodic(Duration(milliseconds: 1), (timer) {
+        // setStateを呼び出すことで画面を再描画
+        setState(() {
+          // Stopwatch.elapsedは経過時間を返す
+          final Duration elapsed = _stopwatch.elapsed;
+          // 0付きの2桁の文字列に変換
+          final String minute = elapsed.inMinutes.toString().padLeft(2, '0');
+          final String sec =
+              (elapsed.inSeconds % 60).toString().padLeft(2, '0');
+          final String milliSec =
+              (elapsed.inMilliseconds % 1000).toString().padLeft(3, '0');
+          _time = '$minute:$sec:$milliSec';
+        });
+      });
+    }
   }
-}
 
-class MyCheckBox extends StatefulWidget {
-  const MyCheckBox({super.key});
+  void _stopTimer() {
+    if (_stopwatch.isRunning) {
+      _stopwatch.stop();
+      _timer.cancel();
+    }
+  }
 
-  @override
-  State<MyCheckBox> createState() => _MyCheckBoxState();
-}
-
-class _MyCheckBoxState extends State<MyCheckBox> {
-  bool isChecked = false;
-
-  void _toggleCheckbox() {
-    // setStateで状態を更新
+  void _resetTimer() {
+    _stopwatch.reset();
+    // 初期値で画面を再描画
     setState(() {
-      isChecked = !isChecked;
+      _time = "00:00:000";
     });
-    print('_toggleCheckbox isChecked=[$isChecked]');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('MyCheckBox Demo'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        ),
+        appBar: AppBar(title: const Text('ストップウォッチ')),
         body: Center(
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 70),
-              child: CheckboxListTile(
-                  // CheckBoxを左寄せする
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: const Text('利用規約に同意する。'),
-                  value: isChecked,
-                  onChanged: (value) {
-                    _toggleCheckbox();
-                  }),
-            ),
-            Text('isChecked = [$isChecked]')
-          ]),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('経過時間'),
+              const SizedBox(height: 10),
+              Text('$_time', style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                      onPressed: () {
+                        _startTimer();
+                      },
+                      child: const Text('スタート')),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                      onPressed: () {
+                        _stopTimer();
+                      },
+                      child: const Text('ストップ')),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                      onPressed: () {
+                        _resetTimer();
+                      },
+                      child: const Text('リセット')),
+                ],
+              )
+            ],
+          ),
         ));
   }
 }
