@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:flutter/widgets.dart';
+import 'dart:math';
 
 void main() {
   runApp(const MyApp());
@@ -18,96 +16,73 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const StopWatch(),
+      home: const NumberGuessGame(),
     );
   }
 }
 
-class StopWatch extends StatefulWidget {
-  const StopWatch({super.key});
+class NumberGuessGame extends StatefulWidget {
+  const NumberGuessGame({super.key});
 
   @override
-  State<StopWatch> createState() => _StopWatchState();
+  State<NumberGuessGame> createState() => _NumberGuessGameState();
 }
 
-class _StopWatchState extends State<StopWatch> {
-  Timer _timer = Timer(Duration.zero, () {});
-  // Flutterが定義しているStopwatchオブジェクト
-  final Stopwatch _stopwatch = Stopwatch();
-  String _time = '00:00:000';
+class _NumberGuessGameState extends State<NumberGuessGame> {
+  // nextIntは0~99までなので+1する
+  int _numberToGuess = Random().nextInt(100) + 1;
+  String _message = '私が思い浮かべている数字は何でしょうか？(1~100)';
+  final TextEditingController _controller = TextEditingController();
+  int _count = 0;
 
-  void _startTimer() {
-    if (!_stopwatch.isRunning) {
-      _stopwatch.start();
-      // 1millisecondごとに実施する処理
-      _timer = Timer.periodic(Duration(milliseconds: 1), (timer) {
-        // setStateを呼び出すことで画面を再描画
-        setState(() {
-          // Stopwatch.elapsedは経過時間を返す
-          final Duration elapsed = _stopwatch.elapsed;
-          // 0付きの2桁の文字列に変換
-          final String minute = elapsed.inMinutes.toString().padLeft(2, '0');
-          final String sec =
-              (elapsed.inSeconds % 60).toString().padLeft(2, '0');
-          final String milliSec =
-              (elapsed.inMilliseconds % 1000).toString().padLeft(3, '0');
-          _time = '$minute:$sec:$milliSec';
-        });
+  void _guessNumber() {
+    int? userGuess = int.tryParse(_controller.text);
+
+    if (userGuess == null || userGuess <= 0 || userGuess > 100) {
+      _message = '1から100の数値を入れてください';
+      setState(() {
+        _controller.clear();
       });
+      return;
+    } else if (userGuess == _numberToGuess) {
+      _count++;
+      _message =
+          'おめでとうございます！「$userGuess」で正解です!\n$_count回目で当てました。\n新しい数字を思い浮かべます。';
+      _numberToGuess = Random().nextInt(100) + 1;
+      _count = 0;
+    } else if (userGuess > _numberToGuess) {
+      _count++;
+      _message = '「$userGuess」は大きすぎます!もう一度試してみてください。';
+    } else if (userGuess < _numberToGuess) {
+      _count++;
+      _message = '「$userGuess」は小さすぎます!もう一度試してみてください。';
     }
-  }
 
-  void _stopTimer() {
-    if (_stopwatch.isRunning) {
-      _stopwatch.stop();
-      _timer.cancel();
-    }
-  }
-
-  void _resetTimer() {
-    _stopwatch.reset();
-    // 初期値で画面を再描画
     setState(() {
-      _time = "00:00:000";
+      _controller.clear();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text('ストップウォッチ')),
-        body: Center(
+      appBar: AppBar(title: Text('数字当てゲーム')),
+      body: Padding(
+          padding: const EdgeInsets.all(20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('経過時間'),
-              const SizedBox(height: 10),
-              Text('$_time', style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                      onPressed: () {
-                        _startTimer();
-                      },
-                      child: const Text('スタート')),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                      onPressed: () {
-                        _stopTimer();
-                      },
-                      child: const Text('ストップ')),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                      onPressed: () {
-                        _resetTimer();
-                      },
-                      child: const Text('リセット')),
-                ],
-              )
-            ],
-          ),
-        ));
+              // 中央揃え
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(_message, style: TextStyle(fontSize: 24)),
+                TextField(
+                  controller: _controller,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'あなたの予想を入力してください。',
+                  ),
+                ),
+                ElevatedButton(onPressed: _guessNumber, child: Text('予想を回答する'))
+              ])),
+    );
   }
 }
