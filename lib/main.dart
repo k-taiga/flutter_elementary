@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,73 +16,40 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const NumberGuessGame(),
+      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class NumberGuessGame extends StatefulWidget {
-  const NumberGuessGame({super.key});
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+  final String title;
 
   @override
-  State<NumberGuessGame> createState() => _NumberGuessGameState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _NumberGuessGameState extends State<NumberGuessGame> {
-  // nextIntは0~99までなので+1する
-  int _numberToGuess = Random().nextInt(100) + 1;
-  String _message = '私が思い浮かべている数字は何でしょうか？(1~100)';
-  final TextEditingController _controller = TextEditingController();
-  int _count = 0;
+class _MyHomePageState extends State<MyHomePage> {
+  // lateは宣言時ではなく後ほど初期化されるという意味
+  late final WebViewController controller;
 
-  void _guessNumber() {
-    int? userGuess = int.tryParse(_controller.text);
-
-    if (userGuess == null || userGuess <= 0 || userGuess > 100) {
-      _message = '1から100の数値を入れてください';
-      setState(() {
-        _controller.clear();
-      });
-      return;
-    } else if (userGuess == _numberToGuess) {
-      _count++;
-      _message =
-          'おめでとうございます！「$userGuess」で正解です!\n$_count回目で当てました。\n新しい数字を思い浮かべます。';
-      _numberToGuess = Random().nextInt(100) + 1;
-      _count = 0;
-    } else if (userGuess > _numberToGuess) {
-      _count++;
-      _message = '「$userGuess」は大きすぎます!もう一度試してみてください。';
-    } else if (userGuess < _numberToGuess) {
-      _count++;
-      _message = '「$userGuess」は小さすぎます!もう一度試してみてください。';
-    }
-
-    setState(() {
-      _controller.clear();
-    });
+  @override
+  void initState() {
+    super.initState();
+    // ..はカスケード記法 初期化時にまとめて処理を行う記法
+    // ..しなければ初期化後にcontroller.loadRequestとして呼ぶ
+    controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadRequest(Uri.parse('https://www.youtube.com/watch?v=RA-vLF_vnng'));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('数字当てゲーム')),
-      body: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-              // 中央揃え
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(_message, style: TextStyle(fontSize: 24)),
-                TextField(
-                  controller: _controller,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'あなたの予想を入力してください。',
-                  ),
-                ),
-                ElevatedButton(onPressed: _guessNumber, child: Text('予想を回答する'))
-              ])),
-    );
+        body: SafeArea(
+      child: WebViewWidget(
+        controller: controller,
+      ),
+    ));
   }
 }
