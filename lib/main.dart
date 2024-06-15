@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
@@ -30,26 +31,68 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // lateは宣言時ではなく後ほど初期化されるという意味
-  late final WebViewController controller;
+  TextEditingController controller = TextEditingController();
+  List<String> items = [];
+  String errorMessage = '';
 
-  @override
-  void initState() {
-    super.initState();
-    // ..はカスケード記法 初期化時にまとめて処理を行う記法
-    // ..しなければ初期化後にcontroller.loadRequestとして呼ぶ
-    controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse('https://www.youtube.com/watch?v=RA-vLF_vnng'));
+  // 非同期関数 Future<返り値> 関数 async
+  Future<void> loadZipCode(String zipCode) async {
+    setState(() {
+      errorMessage = 'APIレスポンス待ち';
+    });
+
+    final response = await http.get(
+        Uri.parse('https://zipcloud.ibsnet.co.jp/api/search?zipcode=$zipCode'));
+
+    if (response.statusCode != 200) {
+      return;
+    }
+
+    // json decodeした結果をasでMap型にキャスト KeyがString,Valueがdynamic(何でもOKな型)
+    final body = json.decode(response.body) as Map<String, dynamic>;
+    // resultsが存在しなければ [] を入れてからasでキャスト
+    final results = (body['results'] ?? []) as List<dynamic>;
+
+    if (results.isEmpty) {
+      setState(() {
+        errorMessage = 'そのような郵便番号の住所はありません';
+      });
+    } else {
+      setState(() {
+        errorMessage = '';
+        // mapでresultsの各要素を回して新しいコレクションを生成
+        // toList(growable:false)で生成したコレクションをListに変更しその値の変更ができないようにする
+        items = results
+            .map((result) =>
+                "${result['address1']}${result['address2']}${result['address3']}")
+            .toList(growable: false);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: SafeArea(
-      child: WebViewWidget(
-        controller: controller,
-      ),
-    ));
+        appBar: AppBar(
+            title: TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  if (value.isNotEmpty) {
+                    loadZipCode(value);
+                  }
+                })),
+        body: ListView.builder(
+          // BuildContextとindexを引数に取り、Widgetを返す関数
+          // indexはリストのインデックス
+          itemBuilder: (context, index) {
+            if (errorMessage.isNotEmpty) {
+              return ListTile(title: Text(errorMessage));
+            } else {
+              return ListTile(title: Text(items[index]));
+            }
+          },
+          itemCount: items.length,
+        ));
   }
 }
