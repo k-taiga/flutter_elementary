@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,68 +30,64 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  TextEditingController controller = TextEditingController();
-  List<String> items = [];
-  String errorMessage = '';
+  List<List<String>> items = [
+    ['Flutter', 'https://flutter.dev/'],
+    ['Google', 'https://www.google.co.jp/'],
+    ['YouTube', 'https://www.youtube.com/'],
+  ];
 
-  // 非同期関数 Future<返り値> 関数 async
-  Future<void> loadZipCode(String zipCode) async {
-    setState(() {
-      errorMessage = 'APIレスポンス待ち';
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(title: Text('ブックマーク')),
+        body: ListView.builder(
+          itemBuilder: (context, index) {
+            final item = items[index];
+            final title = item[0] ?? '';
+            final url = item[1] ?? '';
+            return ListTile(
+                title: Text(title),
+                // onTapでWebViewPageに遷移
+                onTap: () {
+                  // contextとMaterialPageRouteを引数に渡す
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return WebViewPage(title: title, url: url);
+                  }));
+                });
+          },
+          itemCount: items.length,
+        ));
+  }
+}
 
-    final response = await http.get(
-        Uri.parse('https://zipcloud.ibsnet.co.jp/api/search?zipcode=$zipCode'));
+class WebViewPage extends StatefulWidget {
+  const WebViewPage({required this.title, required this.url, super.key});
+  final String title;
+  final String url;
 
-    if (response.statusCode != 200) {
-      return;
-    }
+  @override
+  State<WebViewPage> createState() => _WebViewPageState();
+}
 
-    // json decodeした結果をasでMap型にキャスト KeyがString,Valueがdynamic(何でもOKな型)
-    final body = json.decode(response.body) as Map<String, dynamic>;
-    // resultsが存在しなければ [] を入れてからasでキャスト
-    final results = (body['results'] ?? []) as List<dynamic>;
+class _WebViewPageState extends State<WebViewPage> {
+  // lateで宣言すると、初期化を遅らせることができる
+  late final WebViewController controller;
 
-    if (results.isEmpty) {
-      setState(() {
-        errorMessage = 'そのような郵便番号の住所はありません';
-      });
-    } else {
-      setState(() {
-        errorMessage = '';
-        // mapでresultsの各要素を回して新しいコレクションを生成
-        // toList(growable:false)で生成したコレクションをListに変更しその値の変更ができないようにする
-        items = results
-            .map((result) =>
-                "${result['address1']}${result['address2']}${result['address3']}")
-            .toList(growable: false);
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    // ここでWebViewControllerを初期化
+    controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadRequest(Uri.parse(widget.url));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-            title: TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  if (value.isNotEmpty) {
-                    loadZipCode(value);
-                  }
-                })),
-        body: ListView.builder(
-          // BuildContextとindexを引数に取り、Widgetを返す関数
-          // indexはリストのインデックス
-          itemBuilder: (context, index) {
-            if (errorMessage.isNotEmpty) {
-              return ListTile(title: Text(errorMessage));
-            } else {
-              return ListTile(title: Text(items[index]));
-            }
-          },
-          itemCount: items.length,
+        appBar: AppBar(title: Text(widget.title)),
+        body: WebViewWidget(
+          controller: controller,
         ));
   }
 }
